@@ -12,6 +12,7 @@ params.type_data = "Illumina"
 params.file_bam_compare = null
 params.help = false
 
+
 //print usage
 if (params.help) {
     log.info ''
