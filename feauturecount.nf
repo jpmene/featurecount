@@ -81,7 +81,7 @@ if(params.type_data == "Solid" ){
 
         """
         featureCounts -T ${task.cpus} \
-        -p -M -O -R --largestOverlap -s 1 \
+        -p -M -O --largestOverlap -s 1 \
         -t exon -g gene_id \
         -a ${anno} \
         -o ${id} ${mapping} \
@@ -106,7 +106,7 @@ if(params.type_data == "Illumina" ){
 
         """
         featureCounts -T ${task.cpus} \
-        -p -M -O -R --largestOverlap -s 2 \
+        -p -M -O --largestOverlap -s 2 \
         -t exon -g gene_id \
         -a ${anno} \
         -o ${id} ${mapping} \
@@ -143,7 +143,7 @@ if(params.file_bam_compare != null){
 
             """
             featureCounts -T ${task.cpus} \
-            -p -M -O -R --largestOverlap -s 1 \
+            -p -M -O --largestOverlap -s 1 \
             -t exon -g gene_id \
             -a ${anno} \
             -o ${id} ${mapping} \
