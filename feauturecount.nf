@@ -48,16 +48,16 @@ file_mapping =  Channel.fromPath(params.bam).map { file -> tuple(file.baseName, 
 /*
 * Parameter of featureCount analyse in fonction of data
 */
-//parametre -f supprimer par rapport au script precedant 
+//parametre -f et R supprimer par rapport au script precedant 
 
 if(params.type_data == "Solid" ){
-    parameter = "-p -R -M -O --largestOverlap -s 1 "
+    parameter = "-p -M -O --largestOverlap -s 1 "
 }
 if(params.type_data == "Illumina" ){
-    parameter = "-p -R -M -O --largestOverlap -s 2 "
+    parameter = "-p -M -O --largestOverlap -s 2 "
 }
 if(params.type_data == "Proton" ){
-    parameter = "-R -M -O --largestOverlap -s 1 "
+    parameter = "-M -O --largestOverlap -s 1 "
 }
 
 
@@ -82,7 +82,7 @@ if(params.type_data == "Proton" ){
 */
 
 process featureCounts {
-    cpus 4
+    cpus 2
     tag{id}
     publishDir "result/featureCounts/$params.output_dir/", mode: "copy"
 
@@ -115,7 +115,7 @@ if(params.compare != null){
     bam_compare =  Channel.fromPath(params.compare).map { file -> tuple(file.baseName, file) }
 
     process featureCounts_compare {
-        cpus 4
+        cpus 2
         tag{id}
         publishDir "result/featureCounts/$params.output_dir/", mode: "copy"
 
