@@ -44,6 +44,17 @@ path_featurecounts= file(params.path_featurecounts)
 file_mapping =  Channel.fromPath(params.file_bam).map { file -> tuple(file.baseName, file) }
 
 
+
+
+if(params.type_data == "Solid" ){
+    parameter = 1
+}
+if(params.type_data == "Illumina" ){
+    parameter = 2
+    }
+
+
+
 /*
 *This program executes a refined paired-end with two files SAM  
 *
@@ -61,59 +72,29 @@ file_mapping =  Channel.fromPath(params.file_bam).map { file -> tuple(file.baseN
 *-O     Assign reads to all their overlapping meta-features
 *-s     Perform strand-specific read counting. Possible values:  
 *           0 (unstranded), 1 (stranded) and 2 (reversely stranded).
-*-R     Output detailed assignment result for each read.
-
 */
 
-if(params.type_data == "Solid" ){
-    process featureCounts_Solid {
-        cpus 2
-        tag{id}
-        publishDir "result/featureCounts/$params.name_dir/", mode: "copy"
+process featureCounts_Solid {
+    cpus 2
+    tag{id}
+    publishDir "result/featureCounts/$params.name_dir/", mode: "copy"
 
-        input: 
-        set id , file (mapping) from file_mapping
-        each anno from file_annotation
+    input: 
+    set id , file (mapping) from file_mapping
+    each anno from file_annotation
 
-        output: 
+    output: 
 
-        file "${id}" into count 
-        file "*.summary" into summary 
+    file "${id}" into count 
+    file "*.summary" into summary 
 
-        """
-        featureCounts -T ${task.cpus} \
-        -p -M -O --largestOverlap -s 1 \
-        -t exon -g gene_id \
-        -a ${anno} \
-        -o ${id} ${mapping} \
-        """
-
-    }
-}
-if(params.type_data == "Illumina" ){
-    process featureCounts_Illumina {
-        cpus 2
-        tag{id}
-        publishDir "result/featureCounts/$params.name_dir/", mode: "copy"
-
-        input: 
-        set id , file (mapping) from file_mapping
-        each anno from file_annotation
-
-        output: 
-
-        file "${id}" into count 
-        file "*.summary" into summary 
-
-        """
-        featureCounts -T ${task.cpus} \
-        -p -M -O --largestOverlap -s 2 \
-        -t exon -g gene_id \
-        -a ${anno} \
-        -o ${id} ${mapping} \
-        """
-
-    }
+    """
+    featureCounts -T ${task.cpus} \
+    -p -M -O --largestOverlap -s ${parameter} \
+    -t exon -g gene_id \
+    -a ${anno} \
+    -o ${id} ${mapping} \
+    """
 }
 
 /*
@@ -128,10 +109,9 @@ if(params.file_bam_compare != null){
 
     bam_compare =  Channel.fromPath(params.file_bam_compare).map { file -> tuple(file.baseName, file) }
 
-    if(params.type_data == "Solid" ){
-        process featureCounts_Solid {
-            cpus 4
-            tag{id}
+    process featureCounts_Solid {
+        cpus 4
+        tag{id}
 
             input: 
             set id , file (mapping) from bam_compare
@@ -144,38 +124,13 @@ if(params.file_bam_compare != null){
 
             """
             featureCounts -T ${task.cpus} \
-            -p -M -O --largestOverlap -s 1 \
+            -p -M -O --largestOverlap -s ${parameter} \
             -t exon -g gene_id \
             -a ${anno} \
             -o ${id} ${mapping} \
             """
 
         }
-    }
-    if(params.type_data == "Illumina" ){
-            process featureCounts_Illumina {
-            cpus 4
-            tag{id}
-
-            input: 
-            set id , file (mapping) from bam_compare
-            each anno from file_annotation
-
-            output: 
-
-            file "${id}" into count_compare 
-            file "*.summary" into summary_compare 
-
-            """
-            featureCounts -T ${task.cpus} \
-            -p -M -O -R --largestOverlap -s 2 \
-            -t exon -g gene_id \
-            -a ${anno} \
-            -o ${id} ${mapping} \
-            """
-
-        }
-    }
 
     process plot { 
         publishDir "result/featureCounts/$params.name_dir/", mode: "copy"
@@ -190,5 +145,5 @@ if(params.file_bam_compare != null){
         """
         Rscript '$baseDir/plotcount.R' ${count_1} ${count_2}
         """
+        }
     }
-}
