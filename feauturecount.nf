@@ -81,7 +81,7 @@ if(params.type_data == "Proton" ){
 *           0 (unstranded), 1 (stranded) and 2 (reversely stranded).
 */
 
-process featureCounts_Solid {
+process featureCounts {
     cpus 4
     tag{id}
     publishDir "result/featureCounts/$params.output_dir/", mode: "copy"
@@ -114,7 +114,7 @@ if(params.compare != null){
 
     bam_compare =  Channel.fromPath(params.compare).map { file -> tuple(file.baseName, file) }
 
-    process featureCounts_Solid {
+    process featureCounts_compare {
         cpus 4
         tag{id}
         publishDir "result/featureCounts/$params.output_dir/", mode: "copy"
@@ -143,7 +143,7 @@ if(params.compare != null){
     */    
 
     process plot { 
-        publishDir "result/featureCounts/$params.name_dir/", mode: "copy"
+        publishDir "result/featureCounts/$params.output_dir/", mode: "copy"
         
         input: 
         file count_1 from count
