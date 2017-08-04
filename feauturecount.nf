@@ -4,12 +4,11 @@
 *params input 
 */
 
-params.file_bam = "$baseDir/data/*.bam"
-params.path_featurecounts  ="/bin/featureCqounts" 
-params.name_dir  ="data" 
+params.bam = "$baseDir/data/*.bam"
+params.output_dir = "data" 
 params.annotation  ="$baseDir/data/*.gtf"
 params.type_data = "Illumina"
-params.file_bam_compare = null
+params.compare = null
 params.help = false
 
 
@@ -21,37 +20,45 @@ if (params.help) {
     log.info '.'
     log.info ''
     log.info 'Usage: '
-    log.info '    nextflow feauturecount.nf --file_bam_compare ../file.bam --type_data Illumina'
-    log.info '            --name_dir toto --annotation file.gtf --path_featurecounts /bin/featureCqounts '
+    log.info '    nextflow feauturecount.nf --compare PATH/file.bam --type_data Illumina'
+    log.info '            --output_dir toto --annotation file.gtf --bam  "PATH/*.bam"   '
+    log.info 'Or '
+    log.info '    nextflow feauturecount.nf --type_data Illumina   --output_dir toto    '
+    log.info '             --annotation PATH/file.gtf   --bam "PATH/*.bam"                    '
     log.info ''
     log.info 'Options:'
     log.info '    --help                              Show this message and exit.'
-    log.info '    --type_data                         Solid or Illumina data [default : Illumina]'
+    log.info '    --type_data                         Solid, Illumina or Proton data [default : Illumina]'
     log.info '    --annotation                        File of genome annotation in GTF .'
-    log.info '    --name_dir                          Name Dir.'
-    log.info '    --path_featurecounts                Path of your tool featureCounts [default : /bin/featureCqounts] .'
-    log.info '    --file_bam                          Input file BAM [ex :"././*.bam"].'
-    log.info '    --file_bam_compare                  Input file BAM . Option for compare BAM and return plot [need R]  .'
+    log.info '    --output_dir                        Name Directorie of output result.'
+    log.info '    --bam                               Input file BAM [ex :"././*.bam"].'
+    log.info '    --compare                           Input file BAM . Option for compare BAM and return plot [need R]  .'
         
     exit 1
 }
 
-
+/*
+*Create channel by params. input 
+*/
 file_annotation = file(params.annotation)
 
-path_featurecounts= file(params.path_featurecounts)
-
-file_mapping =  Channel.fromPath(params.file_bam).map { file -> tuple(file.baseName, file) }
+file_mapping =  Channel.fromPath(params.bam).map { file -> tuple(file.baseName, file) }
 
 
-
+/*
+* Parameter of featureCount analyse in fonction of data
+*/
+//parametre -f supprimer par rapport au script precedant 
 
 if(params.type_data == "Solid" ){
-    parameter = 1
+    parameter = "-p -R -M -O --largestOverlap -s 1 "
 }
 if(params.type_data == "Illumina" ){
-    parameter = 2
-    }
+    parameter = "-p -R -M -O --largestOverlap -s 2 "
+}
+if(params.type_data == "Proton" ){
+    parameter = "-R -M -O --largestOverlap -s 1 "
+}
 
 
 
@@ -75,9 +82,9 @@ if(params.type_data == "Illumina" ){
 */
 
 process featureCounts_Solid {
-    cpus 2
+    cpus 4
     tag{id}
-    publishDir "result/featureCounts/$params.name_dir/", mode: "copy"
+    publishDir "result/featureCounts/$params.output_dir/", mode: "copy"
 
     input: 
     set id , file (mapping) from file_mapping
@@ -90,7 +97,7 @@ process featureCounts_Solid {
 
     """
     featureCounts -T ${task.cpus} \
-    -p -M -O --largestOverlap -s ${parameter} \
+    ${parameter} \
     -t exon -g gene_id \
     -a ${anno} \
     -o ${id} ${mapping} \
@@ -98,20 +105,19 @@ process featureCounts_Solid {
 }
 
 /*
-*
-*Execute this option if you will compare two BAM 
-*First step execute the programme featureCounts 
-*
+*Execute this option if you will compare BAM 
+* 
 */
 
-if(params.file_bam_compare != null){
+if(params.compare != null){
 
 
-    bam_compare =  Channel.fromPath(params.file_bam_compare).map { file -> tuple(file.baseName, file) }
+    bam_compare =  Channel.fromPath(params.compare).map { file -> tuple(file.baseName, file) }
 
     process featureCounts_Solid {
         cpus 4
         tag{id}
+        publishDir "result/featureCounts/$params.output_dir/", mode: "copy"
 
             input: 
             set id , file (mapping) from bam_compare
@@ -124,7 +130,7 @@ if(params.file_bam_compare != null){
 
             """
             featureCounts -T ${task.cpus} \
-            -p -M -O --largestOverlap -s ${parameter} \
+            ${parameter} \
             -t exon -g gene_id \
             -a ${anno} \
             -o ${id} ${mapping} \
@@ -132,8 +138,13 @@ if(params.file_bam_compare != null){
 
         }
 
+    /*
+    *Process call script R for plot count gene in different alignement    
+    */    
+
     process plot { 
         publishDir "result/featureCounts/$params.name_dir/", mode: "copy"
+        
         input: 
         file count_1 from count
         each count_2 from count_compare
