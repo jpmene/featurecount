@@ -31,4 +31,6 @@ plot(data_merge$Count.x,
      xlab=args[1],
      ylab=args[2])
 
+abline(0,1,col = "red")
+
 dev.off()

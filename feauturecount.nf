@@ -51,10 +51,10 @@ file_mapping =  Channel.fromPath(params.bam).map { file -> tuple(file.baseName, 
 //parametre -f et R supprimer par rapport au script precedant 
 
 if(params.type_data == "Solid" ){
-    parameter = "-p -M -O --largestOverlap -s 1 "
+    parameter = "-p -M -O --largestOverlap -s 1 -f "
 }
 if(params.type_data == "Illumina" ){
-    parameter = "-p -M -O --largestOverlap -s 2 "
+    parameter = "-p -M -O --largestOverlap -s 2 -f "
 }
 if(params.type_data == "Proton" ){
     parameter = "-M -O --largestOverlap -s 1 "
@@ -98,7 +98,7 @@ process featureCounts {
     """
     featureCounts -T ${task.cpus} \
     ${parameter} \
-    -t exon -g gene_id \
+    -t gene -g gene_id \
     -a ${anno} \
     -o ${id} ${mapping} \
     """
@@ -131,7 +131,7 @@ if(params.compare != null){
             """
             featureCounts -T ${task.cpus} \
             ${parameter} \
-            -t exon -g gene_id \
+            -t gene -g gene_id \
             -a ${anno} \
             -o ${id} ${mapping} \
             """
